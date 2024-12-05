@@ -13,10 +13,10 @@
 		}
 
 		if (token == "don't()") {
-			print "don't()";
+			#print "don't()";
 			printing = 0;
 		} else if (token == "do()") {
-			print "do()";
+			#print "do()";
 			printing = 1;
 		}
 
