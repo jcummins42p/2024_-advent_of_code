@@ -9,10 +9,8 @@
 		num2 = substr($0, RSTART + index(substr($0, RSTART), ","), RLENGTH - index(substr($0, RSTART), ",") - 1);
 
 		total += num1 * num2;
-
-		print matched_str, num1 * num2, total;
+		if (num1 > 0 && num2 > 0)
+			print matched_str, num1 * num2, total;
 		$0 = substr($0, RSTART + RLENGTH);
 	}
-
-	print total;
 }

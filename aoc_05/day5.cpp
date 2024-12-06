@@ -6,7 +6,7 @@
 /*   By: jcummins <jcummins@student.42prague.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/02 16:54:17 by jcummins          #+#    #+#             */
-/*   Updated: 2024/12/05 11:36:59 by jcummins         ###   ########.fr       */
+/*   Updated: 2024/12/05 13:46:48 by jcummins         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,21 +86,24 @@ void	readRules(char *filename, std::vector<std::vector<int>> &rules)
 int	checkCorrectPositions(std::vector<int> &update, int j, std::vector<std::vector<int>> &rules)
 {
 	//	checking updates at position j, need the whole vector updats and set of vectors rules to check against
-	//int i = 0;
+	int corrected = 0;
 
 	for (int i = 0; i < rules.size(); i++) {
-		if (rules[i][0] == update[j]) // check that the current rule applies to this number
-		{
-			for (int k = 0; k < update.size(); k++)	// check that other numbers in the uipdate follow the rule
+		if (update[j] == rules[i][0]) // check that the current rule applies to this number
+		{	// check that other numbers in the update follow the rule
+			for (int k = 0; k < update.size(); k++)
 			{
-				if (k < j && )
+				if (k < j && update[k] == rules[i][1] )
 				{
-					
+					corrected = 1;
+					int tmp = update[j];
+					update[j] = update[k];
+					update[k] = tmp;
 				}
 			}
 		}
 	}
-	return (0);
+	return (corrected);
 }
 
 int	checkUpdate(std::vector<int> &update, std::vector<std::vector<int>> &rules)
@@ -108,7 +111,7 @@ int	checkUpdate(std::vector<int> &update, std::vector<std::vector<int>> &rules)
 	for ( int j = 0; j < update.size(); j++)	// for each number in record
 	{
 		if (checkCorrectPositions(update, j, rules)) {
-			std::cout << "Error in pageno index " << j << std::endl;
+			std::cout << "Corrected error in pageno index " << j << std::endl;
 			return (1);
 		}
 	}
@@ -118,13 +121,20 @@ int	checkUpdate(std::vector<int> &update, std::vector<std::vector<int>> &rules)
 int	processData( std::vector<std::vector<int>> &rules, std::vector<std::vector<int>> &updates )
 {
 	int size = updates.size();
+	int	total = 0;
 
 	for ( int i = 0; i < size; i++ )	// for each update record
 	{
 		std::cout << "Checking Update #" << i << ": ";
-		if (!checkUpdate(updates[i], rules));
-			std::cout << "OK" << std::endl;
+		if (checkUpdate(updates[i], rules)) {
+			while (checkUpdate(updates[i], rules))
+					std::cout << "\tupdate " << i << " re-ordering..." << std::endl;
+			std::cout << "OK: Adding middle number " << updates[i][updates[i].size() / 2]
+					<< std::endl;
+			total += updates[i][updates[i].size() / 2];
+		}
 	}
+	std::cout << "Total: " << total << std::endl;
 	return (0);
 }
 

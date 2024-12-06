@@ -1,5 +1,7 @@
+NAME = input.txt
+
 all:
-	c++ -g *.cpp -o mullitover.out
+	./extract_do.awk $(NAME) | ./extract_mul.awk
 
 clean:
 	rm *.out
