@@ -6,7 +6,7 @@
 /*   By: jcummins <jcummins@student.42prague.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/02 16:54:17 by jcummins          #+#    #+#             */
-/*   Updated: 2024/12/09 16:42:28 by jcummins         ###   ########.fr       */
+/*   Updated: 2024/12/09 16:45:42 by jcummins         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,6 +187,8 @@ void printMap( std::vector<std::string> map )
 				std::cout << "🎅";
 			else if (map[i][j] == 'E')
 				std::cout << "🏆";
+			else if (map[i][j] == 'O')
+				std::cout << "🚧";
 		}
 		std::cout << std::endl;
 	}
