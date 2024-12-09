@@ -6,7 +6,7 @@
 /*   By: jcummins <jcummins@student.42prague.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/02 16:54:17 by jcummins          #+#    #+#             */
-/*   Updated: 2024/12/07 16:03:25 by jcummins         ###   ########.fr       */
+/*   Updated: 2024/12/09 16:42:28 by jcummins         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@
 #include <sstream>
 
 typedef std::array<int, 2> t_pos;
+
+typedef std::vector<std::pair<t_pos, int>> t_hist;
 
 typedef enum direction {
 	D_NON,
@@ -39,8 +41,13 @@ typedef struct s_guard {
 	t_pos	pos;
 	int 	spacesmoved;
 	bool	loop;
-	std::vector<std::pair<t_pos, int>> history;
+	t_hist	history;
 } 	t_guard;
+
+std::ostream &operator<<( std::ostream &os, const t_pos &pos ) {
+	os << "{ " << pos[0] << " , " << pos[1] << " }";
+	return (os);
+}
 
 bool	addToHistory(t_guard &guard) // returns true if path has been trod before
 {
@@ -170,53 +177,67 @@ int moveTo( std::vector<std::string> &map, t_guard &guard, int y, int x )
 void printMap( std::vector<std::string> map )
 {
 	std::cout << std::endl;
-	for (int i = 0; i < map.size(); i++)
-		std::cout << map[i] << std::endl;
+	for (int i = 0; i < map.size(); i++) {
+		for (int j = 0; j < map[i].size(); j++) {
+			if (map[i][j] == '#')
+				std::cout << "🎄";
+			else if (map[i][j] == '.')
+				std::cout << "🟫";
+			else if (map[i][j] == 'X')
+				std::cout << "🎅";
+			else if (map[i][j] == 'E')
+				std::cout << "🏆";
+		}
+		std::cout << std::endl;
+	}
+	sleep(1);
+	std::cout << "\033[2J";
 }
 
-int	traverseMap( std::vector<std::string> &map, t_guard &guard )
+int	traverseMap( std::vector<std::string> &map, t_guard &guard, std::vector<t_pos> &history )
 {
+	static int run_count = -1;
 	int 	total = 0;
 	int		moveresult = 1;
 	int x = guard.pos[1];
 	int y = guard.pos[0];
+	t_pos	newpos;
 
+	run_count++;
 	while (moveresult && !guard.loop)
 	{
 		x = guard.pos[1];
 		y = guard.pos[0];
+		if (!run_count) {
+			newpos = {guard.pos[0], guard.pos[1]};
+			history.push_back(newpos);
+			//std::cout << "Adding to history: " << newpos;
+		}
 		switch (guard.dir)
 		{
 			case D_UP:
-				//std::cout << "Moving UP to x=" << x << ",y=" << y << std::endl;
 				moveresult = (moveTo(map, guard, y - 1, x)) ;
 				if (!moveresult)
 					return (guard.spacesmoved);
 				break;
 			case D_RIGHT:
-				//std::cout << "Moving RIGHT to x=" << x << ",y=" << y << std::endl;
 				moveresult = (moveTo(map, guard, y, x + 1)) ;
 				if (!moveresult)
 					return (guard.spacesmoved);
 				break;
 			case D_DOWN:
-				//std::cout << "Moving DOWN to x=" << x << ",y=" << y << std::endl;
 				moveresult = (moveTo(map, guard, y + 1, x)) ;
 				if (!moveresult)
 					return (guard.spacesmoved);
 				break;
 			case D_LEFT:
-				//std::cout << "Moving LEFT to x=" << x << ",y=" << y << std::endl;
 				moveresult = (moveTo(map, guard, y, x - 1)) ;
 				if (!moveresult)
 					return (guard.spacesmoved);
 				break;
 		}
-		//std::cout << std::endl;
-		//printMap(map);
 	}
 	if (guard.loop) {
-		//std::cout << "Error: map contains infinite loop" << std::endl;
 		return (-1);
 	}
 	else
@@ -224,20 +245,34 @@ int	traverseMap( std::vector<std::string> &map, t_guard &guard )
 	return (guard.spacesmoved);
 }
 
-bool	addObstacle( std::vector<std::string> &map ) {
+bool	isInHistory( const std::vector<t_pos> &history, const t_pos &search ) {
+	//std::cout << "There are " << history.size() << " places to place the obstacle" << std::endl;
+	int hist_size = history.size();
+	for (int i = 0; i < hist_size; i++) {
+		if (history[i] == search)
+			return (1);
+	}
+	return (0);
+}
+
+bool	addObstacle( std::vector<std::string> &map , const std::vector<t_pos> &history) {
 	static int y = 0;
 	static int x = 0;
 
+	map[y][x] = 'O';
 	while  (map[y][x] && (map[y][x] != '.'))
 		x++;
-	std::cout << "Checking permutation " << (y * map.size()) + x << " of " << (map.size()) * (map[y].size()) << std::endl ;
-	map[y][x] = 'O';
-	if (x < map[y].size()) {
-		x++;
+	if (isInHistory(history, {y,x})) {
+		return (1);
 	}
-	else if (y < map.size()) {
-		x = 0;
-		y++;
+	while (!isInHistory(history, {y,x})) {
+		if (x < map[y].size()) {
+			x++;
+		}
+		else if (y < map.size()) {
+			x = 0;
+			y++;
+		}
 	}
 	if (x >= map[y].size() && y >= map.size())
 		return (0);
@@ -247,6 +282,7 @@ bool	addObstacle( std::vector<std::string> &map ) {
 int	readfile( char *argv )
 {
 	std::vector<std::string> map;
+	std::vector<t_pos>	history;
 	t_guard	guard;
 	int		result = 0;
 
@@ -260,10 +296,11 @@ int	readfile( char *argv )
 		std::cout << "Error: couldn't find guard" << std::endl;
 		return (0);
 	}
-	while (addObstacle(map)) {	// adds obstacle to each square in the map
-		if (traverseMap(map, guard) < 0)
+	traverseMap(map, guard, history);
+	while (addObstacle(map, history)) {	// adds obstacle to each square in the map
+		if (traverseMap(map, guard, history) < 0)
 			result++;
-		//printMap(map);
+		printMap(map);
 		//sleep(1);
 		readMap(argv, map); // resets map to original state
 		initGuard(guard);
