@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   day9.cpp                                           :+:      :+:    :+:   */
+/*   part2.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jcummins <jcummins@student.42prague.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/02 16:54:17 by jcummins          #+#    #+#             */
-/*   Updated: 2024/12/09 22:24:47 by jcummins         ###   ########.fr       */
+/*   Updated: 2024/12/09 23:50:43 by jcummins         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #include <string>
 #include <sstream>
 
-typedef std::array<int, 2> t_block;
+typedef std::array<int, 3> t_block;
 
 typedef std::vector< t_block > t_disk;
 
@@ -48,6 +48,7 @@ int	addBlock( t_disk &disk, std::string line, unsigned int disk_size, std::vecto
 		output[1] = line[1 + i] - '0';
 		for (int j = 0; j < output[1]; j++)
 		   answer.push_back(-1);
+		output[2] = -1;
 		i += 2;
 		if (i >= disk_size) throw std::runtime_error("Reached end of disk");
 	}
@@ -77,6 +78,44 @@ int compress( std::vector<long> &answer )
 	printBlock( answer );
 	//sleep(1);
 	return (0);
+}
+
+std::vector<long> writeDisk( t_disk disk ) {
+	std::vector<long> output;
+	unsigned long size = disk.size();
+
+	for (unsigned long i = 0; i < size; i++)
+	{
+		for (int j = 0; j < disk[i][0]; j++)
+			output.push_back(i / 2);
+		for (int j = 0; j < disk[i][1]; j++) {
+			if (!(disk[i][2] < 0))
+			   output.push_back(disk[i][2]);
+			else
+			   output.push_back(-1);
+		}
+		i += 2;
+		if (i >= size)
+			break;
+	}
+	printBlock( output );
+	return (output);
+}
+
+t_disk compressDisk( t_disk disk ) {
+	unsigned long size = disk.size();
+
+	for (unsigned long i = 0; i < size; i++ )
+	{
+		for (unsigned long j = (size - 1 - i); j > 0; j--)
+		{
+			if (disk[j][0] <= disk[i][1] && disk[i][2] < 0) {
+				disk[i][2] = j;
+				break;
+			}
+		}
+	}
+	return (disk);
 }
 
 unsigned long long checksum( std::vector<long> answer) {
@@ -117,7 +156,8 @@ void readfile( char *filename )
 	}
 	printBlock(answer);
 	compress(answer);
-	std::cout << checksum(answer) << std::endl;
+	writeDisk(compressDisk(disk));
+	//std::cout << checksum(answer) << std::endl;
 }
 
 int	main( int argc, char *argv[] )
